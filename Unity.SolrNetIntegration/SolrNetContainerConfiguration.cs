@@ -42,6 +42,7 @@ namespace Unity.SolrNetIntegration {
                 typeof (MappedPropertiesIsInSolrSchemaRule),
                 typeof (RequiredFieldsAreMappedRule),
                 typeof (UniqueKeyMatchesMappingRule),
+                typeof(MultivaluedMappedToCollectionRule),
             };
 
             foreach (var validationRule in validationRules) {
@@ -60,7 +61,8 @@ namespace Unity.SolrNetIntegration {
         private void RegisterParsers(IUnityContainer container) {
             container.RegisterType(typeof (ISolrDocumentResponseParser<>), typeof (SolrDocumentResponseParser<>));
             container.RegisterType<ISolrDocumentResponseParser<Dictionary<string, object>>, SolrDictionaryDocumentResponseParser>();
-            container.RegisterType(typeof (ISolrAbstractResponseParser<>), typeof (DefaultResponseParser<>));
+            container.RegisterType(typeof(ISolrAbstractResponseParser<>), typeof(DefaultResponseParser<>));
+            container.RegisterType(typeof(ISolrAbstractResponseParser<>), typeof(DefaultResponseParser<>),"UnityFix");
 
             container.RegisterType<ISolrHeaderResponseParser, HeaderResponseParser<string>>();
             container.RegisterType<ISolrExtractResponseParser, ExtractResponseParser>();
@@ -68,6 +70,8 @@ namespace Unity.SolrNetIntegration {
             container.RegisterType<ISolrFieldParser, DefaultFieldParser>();
             container.RegisterType<ISolrSchemaParser, SolrSchemaParser>();
             container.RegisterType<ISolrDIHStatusParser, SolrDIHStatusParser>();
+            container.RegisterType<ISolrStatusResponseParser, SolrStatusResponseParser>();
+            container.RegisterType<ISolrCoreAdmin, SolrCoreAdmin>();
         }
 
         private void RegisterCore(SolrCore core, IUnityContainer container) {

@@ -288,8 +288,7 @@ namespace SolrNet.Tests {
 
         [Test]
         public void TermsSingleField() {
-            var queryExecuter = new SolrQueryExecuter<TestDocument>(null, null, null, null, null);
-            var p = queryExecuter.GetTermsParameters(new QueryOptions {
+            var p = SolrQueryExecuter<TestDocument>.GetTermsParameters(new QueryOptions {
                 Terms = new TermsParameters("text") {
                     Limit = 10,
                     Lower = "lower",
@@ -323,8 +322,7 @@ namespace SolrNet.Tests {
 
         [Test]
         public void TermsMultipleFields() {
-            var queryExecuter = new SolrQueryExecuter<TestDocument>(null, null, null, null, null);
-            var p = queryExecuter.GetTermsParameters(new QueryOptions {
+            var p = SolrQueryExecuter<TestDocument>.GetTermsParameters(new QueryOptions {
                 Terms = new TermsParameters(new List<string> { "text", "text2", "text3" }) {
                     Limit = 10,
                     Lower = "lower",
@@ -357,6 +355,86 @@ namespace SolrNet.Tests {
             Assert.Contains(p, KV.Create("terms.upper", "upper"));
             Assert.Contains(p, KV.Create("terms.upper.incl", "true"));
         }
+
+        [Test]
+        public void GetTermVectorParameterOptions_All() {
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(TermVectorParameterOptions.All).ToList();
+            Assert.AreEqual(1, r.Count);
+            Assert.AreEqual("tv.all", r[0]);
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_All_indirect() {
+            const TermVectorParameterOptions o = 
+                TermVectorParameterOptions.DocumentFrequency 
+                | TermVectorParameterOptions.TermFrequency 
+                | TermVectorParameterOptions.Positions 
+                | TermVectorParameterOptions.Offsets 
+                | TermVectorParameterOptions.TermFrequency_InverseDocumentFrequency;
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(o).ToList();
+            Assert.AreEqual(1, r.Count);
+            Assert.AreEqual("tv.all", r[0]);
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_Tf() {
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(TermVectorParameterOptions.TermFrequency).ToList();
+            Assert.AreEqual(1, r.Count);
+            Assert.AreEqual("tv.tf", r[0]);
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_Df() {
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(TermVectorParameterOptions.DocumentFrequency).ToList();
+            Assert.AreEqual(1, r.Count);
+            Assert.AreEqual("tv.df", r[0]);
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_default() {
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(TermVectorParameterOptions.Default).ToList();
+            Assert.AreEqual(0, r.Count);
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_TfDf() {
+            const TermVectorParameterOptions o =
+                TermVectorParameterOptions.DocumentFrequency
+                | TermVectorParameterOptions.TermFrequency;
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(o).ToList();
+            Assert.AreEqual(2, r.Count);
+            Assert.Contains(r, "tv.df");
+            Assert.Contains(r, "tv.tf");
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_offsets() {
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(TermVectorParameterOptions.Offsets).ToList();
+            Assert.AreEqual(1, r.Count);
+            Assert.AreEqual("tv.offsets", r[0]);
+        }
+
+        [Test]
+        public void GetTermVectorParameterOptions_tfidf() {
+            var r = SolrQueryExecuter<object>.GetTermVectorParameterOptions(TermVectorParameterOptions.TermFrequency_InverseDocumentFrequency).ToList();
+            Assert.AreEqual(3, r.Count);
+            Assert.Contains(r, "tv.df");
+            Assert.Contains(r, "tv.tf");
+            Assert.Contains(r, "tv.tf_idf");
+        }
+
+		[Test]
+		public void TermVector() {
+            var p = SolrQueryExecuter<TestDocument>.GetTermVectorQueryOptions(new QueryOptions {
+				TermVector = new TermVectorParameters {
+                    Fields = new[] {"text"},
+                    Options = TermVectorParameterOptions.All,
+				},
+			}).ToList();
+			Assert.Contains(p, KV.Create("tv", "true"));
+			Assert.Contains(p, KV.Create("tv.all", "true"));
+			Assert.Contains(p, KV.Create("tv.fl", "text"));
+		}
 
         [Test]
         public void GetAllParameters_with_spelling() {

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Xml;
 using SolrNet.Commands.Parameters;
@@ -26,10 +27,12 @@ namespace SolrNet.Commands {
     /// Deletes document(s), either by id or by query
     /// </summary>
 	public class DeleteCommand : ISolrCommand {
-		private readonly ISolrDeleteParam deleteParam;
+        private readonly DeleteByIdAndOrQueryParam deleteParam;
+        private readonly DeleteParameters parameters;
 
-		public DeleteCommand(ISolrDeleteParam deleteParam) {
-			this.deleteParam = deleteParam;
+        public DeleteCommand(DeleteByIdAndOrQueryParam deleteParam, DeleteParameters parameters) {
+		    this.deleteParam = deleteParam;
+		    this.parameters = parameters;
 		}
 
         /// <summary>
@@ -42,13 +45,16 @@ namespace SolrNet.Commands {
         /// </summary>
 		public bool? FromCommitted { get; set; }
 
-		public ISolrDeleteParam DeleteParam {
-			get { return deleteParam; }
-		}
-
 		public string Execute(ISolrConnection connection) {
 			var xml = new XmlDocument();
 			var deleteNode = xml.CreateElement("delete");
+            if (parameters != null) {
+                if (parameters.CommitWithin.HasValue) {
+                    var attr = xml.CreateAttribute("commitWithin");
+                    attr.Value = parameters.CommitWithin.Value.ToString(CultureInfo.InvariantCulture);
+                    deleteNode.Attributes.Append(attr);
+                }
+            }
 		    var param = new[] {
 		        KV.Create(FromPending, "fromPending"), 
                 KV.Create(FromCommitted, "fromCommitted")

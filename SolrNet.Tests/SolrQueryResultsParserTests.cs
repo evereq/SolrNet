@@ -67,11 +67,11 @@ namespace SolrNet.Tests {
 			Assert.AreEqual(123456, doc.Id);
 	    }
 
-        private SolrQueryResults<T> ParseFromResource<T>(string xmlResource) {
+        private static SolrQueryResults<T> ParseFromResource<T>(string xmlResource) {
             var docParser = GetDocumentParser<T>();
             var parser = new ResultsResponseParser<T>(docParser);
             var r = new SolrQueryResults<T>();
-            var xml = EmbeddedResource.GetEmbeddedXml(GetType(), xmlResource);
+            var xml = EmbeddedResource.GetEmbeddedXml(typeof(SolrQueryResultsParserTests), xmlResource);
             parser.Parse(xml, r);
             return r;
         }
@@ -502,6 +502,37 @@ namespace SolrNet.Tests {
             Assert.AreEqual("boots", terms.ElementAt(1).Terms.First().Key);
             Assert.AreEqual(463, terms.ElementAt(1).Terms.First().Value);
         }
+
+		[Test]
+		public void ParseTermVector()
+		{
+			var parser = new TermVectorResultsParser<Product>();
+			var xml = EmbeddedResource.GetEmbeddedXml(GetType(), "Resources.responseWithTermVector.xml");
+			var docNode = xml.XPathSelectElement("response/lst[@name='termVectors']");
+			var docs = parser.ParseDocuments(docNode).ToList();
+
+			Assert.IsNotNull(docs);
+			Assert.AreEqual(2, docs.Count);
+            var cable = docs
+                .First(d => d.UniqueKey == "3007WFP")
+                .TermVector
+                .First(f => f.Field == "includes");
+
+            Assert.AreEqual("cable", cable.Term);
+            Assert.AreEqual(1, cable.Tf);
+            Assert.AreEqual(1, cable.Df);
+			Assert.AreEqual(1.0, cable.Tf_Idf);
+
+		    var positions = cable.Positions.ToList();
+            Assert.AreEqual(2, cable.Positions.Count);
+            Assert.AreEqual(1, positions[0]);
+            Assert.AreEqual(10, positions[1]);
+
+		    var offsets = cable.Offsets.ToList();
+            Assert.AreEqual(1, cable.Offsets.Count);
+            Assert.AreEqual(4, offsets[0].Start);
+            Assert.AreEqual(9, offsets[0].End);
+		}
 
         [Test]
         public void ParseMoreLikeThis() {

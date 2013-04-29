@@ -152,6 +152,9 @@ namespace SolrNet.Impl {
             foreach (var p in GetCollapseQueryOptions(options))
                 yield return p;
 
+			foreach (var p in GetTermVectorQueryOptions(options))
+				yield return p;
+
             foreach (var p in GetGroupingQueryOptions(options))
                 yield return p;
 
@@ -416,6 +419,46 @@ namespace SolrNet.Impl {
                 yield return KV.Create("collapse.maxdocs", options.Collapse.MaxDocs.ToString());
         }
 
+        public static IEnumerable<string> GetTermVectorParameterOptions(TermVectorParameterOptions o) {
+            if ((o & TermVectorParameterOptions.All) == TermVectorParameterOptions.All) {
+                yield return "tv.all";
+            } else {
+                if ((o & TermVectorParameterOptions.TermFrequency_InverseDocumentFrequency) == TermVectorParameterOptions.TermFrequency_InverseDocumentFrequency) {
+                    yield return "tv.tf";
+                    yield return "tv.df";
+                    yield return "tv.tf_idf";
+                }
+                if ((o & TermVectorParameterOptions.Offsets) == TermVectorParameterOptions.Offsets)
+                    yield return "tv.offsets";
+                if ((o & TermVectorParameterOptions.Positions) == TermVectorParameterOptions.Positions)
+                    yield return "tv.positions";
+                if ((o & TermVectorParameterOptions.DocumentFrequency) == TermVectorParameterOptions.DocumentFrequency)
+                    yield return "tv.df";
+                if ((o & TermVectorParameterOptions.TermFrequency) == TermVectorParameterOptions.TermFrequency)
+                    yield return "tv.tf";
+            }
+        }
+
+		/// <summary>
+		/// Gets the Solr parameters for collapse queries
+		/// </summary>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		public static IEnumerable<KeyValuePair<string, string>> GetTermVectorQueryOptions(QueryOptions options) {
+			if (options.TermVector == null || !options.TermVector.Fields.Any())
+				yield break;
+
+			yield return KV.Create("tv", "true");
+            if (options.TermVector.Fields != null) {
+                var fields = string.Join(",", options.TermVector.Fields.ToArray());
+                if (!string.IsNullOrEmpty(fields))
+                    yield return KV.Create("tv.fl", fields);
+            }
+
+            foreach (var o in GetTermVectorParameterOptions(options.TermVector.Options).Distinct())
+                yield return KV.Create(o, "true");
+		}
+
         /// <summary>
         /// Gets the Solr parameters for collapse queries
         /// </summary>
@@ -497,7 +540,7 @@ namespace SolrNet.Impl {
         /// </summary>
         /// <param name="Options"></param>
         /// <returns></returns>
-        public IEnumerable<KeyValuePair<string, string>> GetTermsParameters(QueryOptions Options) {
+        public static IEnumerable<KeyValuePair<string, string>> GetTermsParameters(QueryOptions Options) {
             var terms = Options.Terms;
             if (terms == null)
                 yield break;

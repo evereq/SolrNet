@@ -62,6 +62,11 @@ namespace SolrNet {
         /// </summary>
         public TermsResults Terms { get; set; }
 
+		/// <summary>
+		/// TermVectorComponent results
+		/// </summary>
+        public ICollection<TermVectorDocumentResult> TermVectorResults { get; set; }
+
         /// <summary>
         /// Grouping results
         /// </summary>

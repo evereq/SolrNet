@@ -44,6 +44,7 @@ namespace StructureMap.SolrNetIntegration
                                             typeof(MappedPropertiesIsInSolrSchemaRule),
                                             typeof(RequiredFieldsAreMappedRule),
                                             typeof(UniqueKeyMatchesMappingRule),
+                                            typeof(MultivaluedMappedToCollectionRule),
                                         };
             foreach (var validationRule in validationRules)
                 For(typeof (IValidationRule)).Use(validationRule);
@@ -78,6 +79,8 @@ namespace StructureMap.SolrNetIntegration
             For<ISolrFieldParser>().Use<DefaultFieldParser>();
             For<ISolrSchemaParser>().Use<SolrSchemaParser>();
             For<ISolrDIHStatusParser>().Use<SolrDIHStatusParser>();
+            For<ISolrStatusResponseParser>().Use<SolrStatusResponseParser>();
+            For<ISolrCoreAdmin>().Use<SolrCoreAdmin>();
         }
 
         /// <summary>
